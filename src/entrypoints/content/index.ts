@@ -4,12 +4,12 @@ let contentScriptEntrypoint;
 
 if (import.meta.env.FIREFOX) {
   contentScriptEntrypoint = defineContentScript({
-    matches: ['https://notebooklm.google.com/*'],
+    matches: ['https://notebook.google.com/*'],
     main() {},
   });
 } else {
   contentScriptEntrypoint = defineContentScript({
-    matches: ['https://notebooklm.google.com/*'],
+    matches: ['https://notebook.google.com/*'],
     allFrames: true,
     main() {
       let footerContainer: Element | null;
@@ -30,7 +30,7 @@ if (import.meta.env.FIREFOX) {
       });
 
       window.addEventListener('message', (event) => {
-        if (event.data.type === 'NOTEBOOKLM_DATA') handleNotebookLMData(event.data.data);
+        if (event.data.type === 'GEMINI_NOTEBOOK_DATA') handleGeminiNotebookData(event.data.data);
       });
 
       observer.observe(document.body, { childList: true, subtree: true });
@@ -45,7 +45,7 @@ if (import.meta.env.FIREFOX) {
         URL.revokeObjectURL(url);
       }
 
-      function handleNotebookLMData(data: string) {
+      function handleGeminiNotebookData(data: string) {
         const blob = createCsvBlob(data);
         if (!blob || !footerContainer) return;
 

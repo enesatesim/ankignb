@@ -1,10 +1,10 @@
-# AnkiNLM Docs
+# AnkiGNB Docs
 
-Technical documentation for the AnkiNLM browser extension (WXT + React).
+Technical documentation for the AnkiGNB browser extension (WXT + React).
 
 ## Contents
 
-- [Overview](./overview.md) — what AnkiNLM does, features, project metadata
+- [Overview](./overview.md) — what AnkiGNB does, features, project metadata
 - [Architecture](./architecture.md) — entrypoints, data flow, key modules
 - [Development](./development.md) — setup, scripts, build / zip
 - [User Guide](./user-guide.md) — install, export, import into Anki

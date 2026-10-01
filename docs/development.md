@@ -33,5 +33,5 @@ npm install
 ## Conventions
 
 - Content/background split by `import.meta.env.FIREFOX`; keep Chrome (MV3 `chrome.*`) and Firefox (MV2 `browser.*` polyfill) paths in the same file for now.
-- All NotebookLM DOM selectors (`artifact-viewer`, `.artifact-footer`, `app-root[data-app-data]`) are coupled to Google's markup — expect breakage on NotebookLM redesigns.
+- All Gemini Notebook DOM selectors (`artifact-viewer`, `.artifact-footer`, `app-root[data-app-data]`) are coupled to Google's markup — expect breakage on Gemini Notebook redesigns.
 - CSV logic stays in `src/utils/utils.ts`; type narrowing in `src/utils/typeguards.ts`.

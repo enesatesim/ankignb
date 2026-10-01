@@ -142,7 +142,7 @@ if (import.meta.env.FIREFOX) {
 
             window.parent.postMessage(
               {
-                type: 'NOTEBOOKLM_DATA',
+                type: 'GEMINI_NOTEBOOK_DATA',
                 data,
               },
               '*'

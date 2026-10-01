@@ -7,10 +7,10 @@ export default defineConfig({
     const isFirefox = browser === 'firefox';
 
     return {
-      name: 'AnkiNLM',
-      version: '1.2',
+      name: 'AnkiGNB',
+      version: '1.3.0',
       description:
-        'The fastest way to export your generated Notebook LM flashcards and import them to your Anki decks',
+        'The fastest way to export your generated Gemini Notebook flashcards and import them to your Anki decks',
 
       manifest_version: isFirefox ? 2 : 3,
 
@@ -20,7 +20,7 @@ export default defineConfig({
             'tabs',
             'clipboardWrite',
             'webNavigation',
-            'https://notebooklm.google.com/*',
+            'https://notebook.google.com/*',
             'https://*.usercontent.goog/*',
             'https://*.scf.usercontent.goog/*',
             '*://*.usercontent.goog/*',
@@ -33,14 +33,14 @@ export default defineConfig({
         ? {
             browser_specific_settings: {
               gecko: {
-                id: 'ankinlm@lkmss.dev',
+                id: 'ankignb@lkmss.dev',
                 strict_min_version: '109.0',
               },
             },
           }
         : {
             host_permissions: [
-              'https://notebooklm.google.com/*',
+              'https://notebook.google.com/*',
               'https://*.usercontent.goog/*',
             ],
           }),

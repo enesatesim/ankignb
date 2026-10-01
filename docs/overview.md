@@ -1,10 +1,10 @@
 # Overview
 
-**AnkiNLM** is a lightweight browser extension that adds **Copy CSV** and **Download CSV** buttons to the NotebookLM Studio flashcard panel footer. One click produces a file ready for Anki import.
+**AnkiGNB** is a lightweight browser extension that adds **Copy CSV** and **Download CSV** buttons to the Gemini Notebook Studio flashcard panel footer. One click produces a file ready for Anki import.
 
 ## Features
 
-- One-click CSV export from NotebookLM Studio
+- One-click CSV export from Gemini Notebook Studio
 - Copy to clipboard or download as `flashcards.csv`
 - Anki-compatible field mapping (Front / Back)
 - Preserves LaTeX (`\sin(x)`, `\frac{a}{b}`, etc.)
@@ -44,6 +44,6 @@ public/                    # static assets
 
 Defined in `../wxt.config.ts`:
 
-- Name: `AnkiNLM`, version `1.2`
-- Chrome: `manifest_version` 3, permissions `scripting`, `clipboardWrite`, `webNavigation`, host permissions for `notebooklm.google.com` and `*.usercontent.goog`
-- Firefox: `manifest_version` 2, permissions `activeTab`, `tabs`, `clipboardWrite`, `webNavigation` + NotebookLM/usercontent hosts, `gecko.id: ankinlm@lkmss.dev`
+- Name: `AnkiGNB`, version `1.3.0`
+- Chrome: `manifest_version` 3, permissions `scripting`, `clipboardWrite`, `webNavigation`, host permissions for `notebook.google.com` and `*.usercontent.goog`
+- Firefox: `manifest_version` 2, permissions `activeTab`, `tabs`, `clipboardWrite`, `webNavigation` + Gemini Notebook/usercontent hosts, `gecko.id: ankignb@lkmss.dev`

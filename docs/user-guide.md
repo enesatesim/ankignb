@@ -6,14 +6,14 @@
 - **Firefox Add-ons:** pending (see manifest `gecko` block in `../wxt.config.ts`)
 - **From source:** `npm install && npm run build`, then load the output folder as an unpacked extension.
 
-## Export from NotebookLM
+## Export from Gemini Notebook
 
-1. Open a NotebookLM Studio with generated flashcards.
+1. Open a Gemini Notebook Studio with generated flashcards.
 2. Scroll to the flashcard section footer.
 3. Click **Download CSV** (saves `flashcards.csv`) or **Copy CSV** (copies to clipboard).
 4. Optional coffee/donate button opens `https://buymeacoffee.com/lkmss`.
 
-Popup (`src/components/Popup.tsx`) is informational only — export buttons live on the NotebookLM page, not in the popup.
+Popup (`src/components/Popup.tsx`) is informational only — export buttons live on the Gemini Notebook page, not in the popup.
 
 ## Import into Anki
 
@@ -36,4 +36,4 @@ Open/create a deck → **Add → Import File**.
 
 ## Math Rendering
 
-For LaTeX/MathJax output install a renderer. Recommended in `../README.md`: **Better Markdown Anki**, add-on ID `2100166052`. AnkiNLM is not affiliated with it — any LaTeX-compatible template works.
+For LaTeX/MathJax output install a renderer. Recommended in `../README.md`: **Better Markdown Anki**, add-on ID `2100166052`. AnkiGNB is not affiliated with it — any LaTeX-compatible template works.

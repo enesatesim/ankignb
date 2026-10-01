@@ -1,8 +1,8 @@
-# Privacy Policy for AnkiNLM
+# Privacy Policy for AnkiGNB
 
-AnkiNLM does not collect, store, or share any personal information from users.
+AnkiGNB does not collect, store, or share any personal information from users.
 
-The extension runs entirely on the user's local browser and only interacts with the NotebookLM page to extract flashcard data already available in the current session. No data is transmitted to any external server.
+The extension runs entirely on the user's local browser and only interacts with the Gemini Notebook page to extract flashcard data already available in the current session. No data is transmitted to any external server.
 
 **Collected Data:** None  
 **Shared Data:** None  
@@ -10,5 +10,5 @@ The extension runs entirely on the user's local browser and only interacts with 
 **Third-party Services:** None
 
 If you have any questions about this privacy policy, please contact the developer through the GitHub repository:  
-[https://github.com/maialks/ankinlm](https://github.com/maialks/ankinlm)
+[https://github.com/enesatesim/ankignb](https://github.com/enesatesim/ankignb)
 
