@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js (see `../package.json` engines — none pinned; WXT 0.20.x requires Node 18+)
+- Node.js 22+ (WXT 0.21.x requires Node 22+; Vite `^7.3.6` and `web-ext` are peer deps — see `../package.json`)
 - npm
 
 ## Setup

@@ -8,11 +8,9 @@ export default defineConfig({
 
     return {
       name: 'AnkiGNB',
-      version: '1.3.0',
+      version: '1.4.0',
       description:
         'The fastest way to export your generated Gemini Notebook flashcards and import them to your Anki decks',
-
-      manifest_version: isFirefox ? 2 : 3,
 
       permissions: isFirefox
         ? [

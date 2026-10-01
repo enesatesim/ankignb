@@ -13,7 +13,8 @@
 
 ## Stack
 
-- [WXT](https://wxt.dev/) `^0.20.11` (extension framework, `srcDir: src`)
+- [WXT](https://wxt.dev/) `^0.21.4` (extension framework, `srcDir: src`)
+- Vite `^7.3.6` + `web-ext` (required/optional peer deps of WXT 0.21)
 - React `^19.1.1` + `@wxt-dev/module-react`
 - TypeScript `^5.9.2`
 - `webextension-polyfill` / `@wxt-dev/webextension-polyfill`
@@ -44,6 +45,6 @@ public/                    # static assets
 
 Defined in `../wxt.config.ts`:
 
-- Name: `AnkiGNB`, version `1.3.0`
+- Name: `AnkiGNB`, version `1.4.0` (MV3 Chrome default, MV2 Firefox default — WXT targets these automatically; do not set `manifest_version` manually)
 - Chrome: `manifest_version` 3, permissions `scripting`, `clipboardWrite`, `webNavigation`, host permissions for `notebook.google.com` and `*.usercontent.goog`
 - Firefox: `manifest_version` 2, permissions `activeTab`, `tabs`, `clipboardWrite`, `webNavigation` + Gemini Notebook/usercontent hosts, `gecko.id: ankignb@lkmss.dev`

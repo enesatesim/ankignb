@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Upgraded WXT `0.20.11` → `0.21.4` (plus `vite ^7`, `web-ext`, `@wxt-dev/module-react ^1.2.2` peer/dep alignment). Requires Node 22+.
+- Removed manual `manifest_version` from `wxt.config.ts` — WXT 0.21 ignores it and targets MV3/MV2 defaults automatically.
+- Bumped extension version to `1.4.0`.
+
+### Security
+
+- `npm audit` now reports 0 vulnerabilities (was 24: 1 low, 3 moderate, 17 high, 3 critical — all transitive build-time via `wxt`/`vite`, none in shipped runtime deps).
+
 ## [1.3.0]
 
 ### Changed
