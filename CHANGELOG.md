@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1]
+
+### Fixed
+
+- Fixed missing buttons in Gemini Notebook by adding support for both `notebook.google.com` and `notebooklm.google.com` (and `.google` top-level domains) in content script matches and host permissions.
+- Fixed race condition where iframe flashcard data was dropped if the footer DOM container had not rendered yet.
+- Fixed button disappearance upon window resize, tab switching, or Angular re-renders with reactive DOM injection.
+- Fixed "Copy CSV" copying raw JSON instead of formatted tab-separated CSV text.
+- Added visual "Copied!" feedback on the Copy button.
+
+### Changed
+
+- Made subframe data extraction resilient with `MutationObserver` and periodic polling in background script injection.
+- Added full Firefox support in content script and background subframe extractor.
+- Bumped extension version to `1.4.1`.
+
+## [1.4.0]
+
 ### Changed
 
 - Upgraded WXT `0.20.11` → `0.21.4` (plus `vite ^7`, `web-ext`, `@wxt-dev/module-react ^1.2.2` peer/dep alignment). Requires Node 22+.
@@ -16,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - `npm audit` now reports 0 vulnerabilities (was 24: 1 low, 3 moderate, 17 high, 3 critical — all transitive build-time via `wxt`/`vite`, none in shipped runtime deps).
+
 
 ## [1.3.0]
 

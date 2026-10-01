@@ -8,7 +8,7 @@ export default defineConfig({
 
     return {
       name: 'AnkiGNB',
-      version: '1.4.0',
+      version: '1.4.1',
       description:
         'The fastest way to export your generated Gemini Notebook flashcards and import them to your Anki decks',
 
@@ -19,6 +19,9 @@ export default defineConfig({
             'clipboardWrite',
             'webNavigation',
             'https://notebook.google.com/*',
+            'https://notebook.google/*',
+            'https://notebooklm.google.com/*',
+            'https://notebooklm.google/*',
             'https://*.usercontent.goog/*',
             'https://*.scf.usercontent.goog/*',
             '*://*.usercontent.goog/*',
@@ -39,9 +42,14 @@ export default defineConfig({
         : {
             host_permissions: [
               'https://notebook.google.com/*',
+              'https://notebook.google/*',
+              'https://notebooklm.google.com/*',
+              'https://notebooklm.google/*',
               'https://*.usercontent.goog/*',
+              'https://*.scf.usercontent.goog/*',
             ],
           }),
     };
   },
 });
+

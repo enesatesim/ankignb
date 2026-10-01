@@ -6,7 +6,7 @@ const Popup = () => {
       {/* Header */}
       <div className='popup-header'>
         <h1 className='popup-title'>AnkiGNB</h1>
-        <div className='popup-version'>v1.3.0</div>
+        <div className='popup-version'>v1.4.1</div>
       </div>
       {/* Content */}
       <div className='popup-content'>
@@ -14,21 +14,20 @@ const Popup = () => {
         <div className='content-section'>
           <InfoIcon className='icon icon-info' />
           <p className='text-content'>
-            The <span className='highlight'>Copy</span> and{' '}
-            <span className='highlight'>Download</span> buttons will appear on the footer of the
+            The <span className='highlight'>Copy CSV</span> and{' '}
+            <span className='highlight'>Download CSV</span> buttons appear automatically on the footer of the
             Gemini Notebook Studio interface.
           </p>
         </div>
-        {/* Warning */}
+        {/* Tips */}
         <div className='content-section'>
           <AlertCircleIcon className='icon icon-warning' />
           <div className='text-content'>
             <p>
-              <span className='warning-highlight'>Note:</span> Resizing the window may cause the
-              buttons to disappear. If this happens, please refresh the page.
+              <span className='warning-highlight'>Tip:</span> Open any flashcard or quiz output in Gemini Notebook Studio to export your cards directly into Anki.
             </p>
             <p className='warning-detail'>
-              This bug will be fixed in future updates. A history section is also planned.
+              Buttons now dynamically stay synchronized across window resizes and navigation.
             </p>
           </div>
         </div>

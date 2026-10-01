@@ -1,157 +1,147 @@
 import { browser } from '@wxt-dev/webextension-polyfill/browser';
 
+function extractAndPostNotebookData() {
+  const win = window as any;
+  if (win.__ankignb_injected__) {
+    if (typeof win.__ankignb_extract__ === 'function') {
+      win.__ankignb_extract__();
+    }
+    return;
+  }
+  win.__ankignb_injected__ = true;
+
+  function tryExtract() {
+    const dataElement =
+      document.querySelector('app-root[data-app-data]') ||
+      document.querySelector('[data-app-data]') ||
+      document.querySelector('app-root');
+
+    if (!dataElement) return false;
+
+    const data = dataElement.getAttribute('data-app-data');
+    if (!data || typeof data !== 'string') return false;
+
+    window.parent.postMessage(
+      {
+        type: 'GEMINI_NOTEBOOK_DATA',
+        data,
+      },
+      '*'
+    );
+    window.parent.postMessage(
+      {
+        type: 'NOTEBOOKLM_DATA',
+        data,
+      },
+      '*'
+    );
+    return true;
+  }
+
+  win.__ankignb_extract__ = tryExtract;
+
+  // 1. Immediate try
+  tryExtract();
+
+  // 2. Observe DOM mutations for data-app-data changes
+  const setupObserver = () => {
+    const targetNode = document.body || document.documentElement;
+    if (!targetNode) return;
+
+    const observer = new MutationObserver(() => {
+      tryExtract();
+    });
+
+    observer.observe(targetNode, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-app-data'],
+    });
+
+    // Poll periodically as a fallback
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      if (tryExtract() || attempts > 30) {
+        clearInterval(interval);
+      }
+    }, 200);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupObserver);
+  } else {
+    setupObserver();
+  }
+}
+
 let backgroundEntrypoint;
 
 if (import.meta.env.FIREFOX) {
   backgroundEntrypoint = defineBackground(() => {
-    console.log('firefox background iniciado');
+    console.log('AnkiGNB: Firefox background initialized');
 
     if (!browser.webNavigation) {
-      console.error('browser.webNavigation não está disponível');
+      console.error('AnkiGNB: browser.webNavigation not available');
       return;
     }
 
+    const code = `(${extractAndPostNotebookData.toString()})();`;
+
     function injectIntoFrame(tabId: number, frameId: number) {
-      browser.tabs.executeScript(tabId, {
-        frameId,
-        runAt: 'document_idle', // safe time to access the DOM
-        code: `(() => {
-          try {
-            console.log(document.body.firstChild)
-            }
-
-            // se precisar observar mudanças (se o DOM for populado depois), faz um waitFor simples
-            const waitFor = (selector, timeout = 3000) => new Promise((resolve) => {
-              const el = document.querySelector(selector);
-              if (el) return resolve({ ok: true, el: null });
-              const obs = new MutationObserver(() => {
-                const found = document.querySelector(selector);
-                if (found) { obs.disconnect(); resolve({ ok: true, el: null }); }
-              });
-              obs.observe(document, { childList: true, subtree: true });
-              setTimeout(() => { obs.disconnect(); resolve({ ok: false }); }, timeout);
-            });
-
-            // tenta esperar pelo app-root por até 2s
-            return (async () => {
-              const waitResult = await waitFor('app-root', 2000);
-              return {
-                ok: true,
-                href: location.href,
-                readyState: document.readyState,
-                bodyExists: !!document.body,
-                found,
-                waitedForAppRoot: waitResult.ok,
-                timestamp: Date.now(),
-              };
-            })();
-          } catch (e) {
-            return { ok: false, error: String(e) };
-          }
-        })();`,
-      });
+      browser.tabs
+        .executeScript(tabId, {
+          frameId,
+          runAt: 'document_idle',
+          code,
+        })
+        .catch(() => {
+          // Ignore restricted frames
+        });
     }
 
-    function handleFrameLoad(tabId: number, frameId: number) {
-      const listener = (details: any) => {
-        if (details.tabId === tabId && details.frameId === frameId) {
-          console.log('[onCompleted] Frame loaded:', details);
+    browser.webNavigation.onCommitted.addListener((details) => {
+      if (details.frameId <= 0) return;
+      injectIntoFrame(details.tabId, details.frameId);
+    });
 
-          // Inject script here
-          injectIntoFrame(tabId, frameId);
-          // Remove listener once we handled this frame
-          browser.webNavigation.onCompleted.removeListener(listener);
-        }
-      };
-
-      browser.webNavigation.onCompleted.addListener(listener);
-    }
-
-    browser.webNavigation.onCommitted.addListener(async (details) => {
-      if (
-        details.frameId <= 0 ||
-        !details.url.includes('usercontent.goog') ||
-        !details.url.includes('shim.html')
-      )
-        return;
-
-      const frames = await browser.webNavigation.getAllFrames({ tabId: details.tabId });
-      if (!frames) return;
-
-      const frame = frames.find((f) => f.frameId === details.frameId);
-
-      if (!frame) return;
-
-      console.log('[onCommitted] Frame confirmed:', frame);
-
-      handleFrameLoad(details.tabId, details.frameId);
-
-      // browser.tabs.executeScript(details.tabId, {
-      //   frameId: details.frameId,
-      //   runAt: 'document_idle',
-      //   matchAboutBlank: true,
-      //   code: `(() => {
-      //     const startObserving = () => {
-      //       const target = document.body || document.documentElement;
-      //       if (!target) return;
-
-      //       const observer = new MutationObserver((mutations) => {
-      //         for (const mutation of mutations) {
-      //           console.log('mutation type:', mutation.type);
-      //         }
-      //       });
-
-      //       observer.observe(target, { childList: true, subtree: true });
-      //       console.log('observer injected');
-      //     };
-
-      //     if (document.readyState === 'loading') {
-      //       window.addEventListener('DOMContentLoaded', startObserving, { once: true });
-      //     } else {
-      //       startObserving();
-      //     }
-      //   })();`,
-      // });
+    browser.webNavigation.onCompleted.addListener((details) => {
+      if (details.frameId <= 0) return;
+      injectIntoFrame(details.tabId, details.frameId);
     });
   });
 } else {
   backgroundEntrypoint = defineBackground(() => {
-    console.log('background script iniciado');
+    console.log('AnkiGNB: Chrome background initialized');
 
     if (!chrome.webNavigation) {
-      console.error('chrome.webNavigation não está disponível');
+      console.error('AnkiGNB: chrome.webNavigation not available');
       return;
     }
 
-    chrome.webNavigation.onCommitted.addListener(async (details) => {
-      if (details.frameId <= 0 || !details.url.startsWith('blob:https://')) return;
+    async function injectIntoFrame(tabId: number, frameId: number) {
       try {
         await chrome.scripting.executeScript({
           target: {
-            tabId: details.tabId,
-            frameIds: [details.frameId],
-            // matchOriginAsFallback: true,
-          } as chrome.scripting.InjectionTarget & { matchOriginAsFallback: boolean },
-          func: () => {
-            console.log('script injetado no iframe');
-            const dataElement = document.body.querySelector('app-root');
-            if (!dataElement) return;
-
-            const data = dataElement.getAttribute('data-app-data');
-            if (!data || typeof data !== 'string') return;
-
-            window.parent.postMessage(
-              {
-                type: 'GEMINI_NOTEBOOK_DATA',
-                data,
-              },
-              '*'
-            );
+            tabId,
+            frameIds: [frameId],
           },
+          func: extractAndPostNotebookData,
         });
-      } catch (error: unknown) {
-        console.error(error);
+      } catch (error) {
+        // Ignore restricted frames
       }
+    }
+
+    chrome.webNavigation.onCommitted.addListener((details) => {
+      if (details.frameId <= 0) return;
+      injectIntoFrame(details.tabId, details.frameId);
+    });
+
+    chrome.webNavigation.onCompleted.addListener((details) => {
+      if (details.frameId <= 0) return;
+      injectIntoFrame(details.tabId, details.frameId);
     });
   });
 }

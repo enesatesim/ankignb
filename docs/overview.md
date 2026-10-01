@@ -45,6 +45,7 @@ public/                    # static assets
 
 Defined in `../wxt.config.ts`:
 
-- Name: `AnkiGNB`, version `1.4.0` (MV3 Chrome default, MV2 Firefox default — WXT targets these automatically; do not set `manifest_version` manually)
-- Chrome: `manifest_version` 3, permissions `scripting`, `clipboardWrite`, `webNavigation`, host permissions for `notebook.google.com` and `*.usercontent.goog`
+- Name: `AnkiGNB`, version `1.4.1` (MV3 Chrome default, MV2 Firefox default — WXT targets these automatically; do not set `manifest_version` manually)
+- Chrome: `manifest_version` 3, permissions `scripting`, `clipboardWrite`, `webNavigation`, host permissions for `notebook.google.com`, `notebooklm.google.com`, `notebook.google`, `notebooklm.google`, and `*.usercontent.goog`
 - Firefox: `manifest_version` 2, permissions `activeTab`, `tabs`, `clipboardWrite`, `webNavigation` + Gemini Notebook/usercontent hosts, `gecko.id: ankignb@lkmss.dev`
+
