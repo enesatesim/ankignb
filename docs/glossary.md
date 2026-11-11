@@ -26,7 +26,7 @@
 | **Entrypoint** | A WXT unit (background, content script, popup) under `src/entrypoints/` |
 | **MV2 / MV3** | Chrome extension Manifest Version 2 / 3. Chrome builds use MV3, Firefox builds use MV2 |
 | **`import.meta.env.FIREFOX`** | WXT build-time flag. It's `true` when building with `-b firefox` |
-| **Better Markdown Anki** | A recommended third-party Anki add-on (ID `2100166052`) for rendering LaTeX/Markdown |
+| **Better Markdown Anki** | An optional third-party Anki add-on (ID `2100166052`) for rendering Markdown. Not needed for math, which AnkiGNB exports as `\(…\)` / `\[…\]` |
 
 ---
 

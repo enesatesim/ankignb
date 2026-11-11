@@ -131,6 +131,26 @@ export const richTextToString = (value: unknown): string | null => {
   return text || null;
 };
 
+/** `$$…$$` that isn't escaped. May span lines. */
+const DISPLAY_MATH = /(?<!\\)\$\$([\s\S]+?)(?<!\\)\$\$/g;
+/**
+ * `$…$` following Pandoc's rules: the opening `$` isn't escaped and is followed by a
+ * non-space, the closing `$` is preceded by a non-space and not followed by a digit, and
+ * there's no newline inside. This leaves prices such as `$5 and $10` alone.
+ */
+const INLINE_MATH = /(?<!\\)\$(?!\s)((?:\\.|[^$\\\n])+?)(?<!\s)\$(?!\d)/g;
+
+/**
+ * Rewrites Markdown-style math delimiters to the ones Anki's built-in MathJax understands:
+ * `$$…$$` → `\[…\]` and `$…$` → `\(…\)`. Escaped `\$` and unmatched `$` are left as they are.
+ */
+export const convertMathDelimiters = (text: string): string => {
+  if (!text.includes('$')) return text;
+  return text
+    .replace(DISPLAY_MATH, (_, math: string) => `\\[${math}\\]`)
+    .replace(INLINE_MATH, (_, math: string) => `\\(${math}\\)`);
+};
+
 /**
  * Converts the artifact JSON (flashcards or quiz) into tab-separated Front/Back rows.
  * Returns `null` when the payload can't be parsed or yields no rows.
@@ -153,13 +173,15 @@ export const toTsv = (data: string): string | null => {
     return escaped;
   }
 
+  const formatField = (field: string) => escapeCsvField(convertMathDelimiters(field));
+
   if (isFlashcardData(parsedData)) {
     for (const card of parsedData.flashcards) {
       if (!card) continue;
       const front = richTextToString(card.f);
       const back = richTextToString(card.b);
       if (!front || !back) continue;
-      rows.push(`${escapeCsvField(front)}\t${escapeCsvField(back)}`);
+      rows.push(`${formatField(front)}\t${formatField(back)}`);
     }
   }
 
@@ -173,7 +195,7 @@ export const toTsv = (data: string): string | null => {
         .map((opt) => richTextToString(opt.text))
         .find(Boolean);
       if (!answer) continue;
-      rows.push(`${escapeCsvField(question)}\t${escapeCsvField(answer)}`);
+      rows.push(`${formatField(question)}\t${formatField(answer)}`);
     }
   }
 

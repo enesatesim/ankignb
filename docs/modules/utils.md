@@ -66,6 +66,14 @@ richTextToString(value: unknown): string | null
 
 Flattens one text field to plain text. A string is returned as is. For an object, it takes the first own key ending in `ContentBlock` whose value is an array (in practice `flashcardContentBlock`), keeps each block's string `content`, drops blocks with none (e.g. a hypothetical image block), and joins what is left with `\n`. Anything else, or no text left, gives `null`.
 
+### `convertMathDelimiters(text)`
+
+```ts
+convertMathDelimiters(text: string): string
+```
+
+Rewrites Markdown-style math to the delimiters Anki's built-in MathJax renders. `$$…$$` → `\[…\]` runs first (may span lines), then `$…$` → `\(…\)`. Inline matches follow Pandoc's rules: the opening `$` isn't escaped and is followed by a non-space, the closing `$` is preceded by a non-space and not followed by a digit, and there's no newline inside. That keeps prices such as `$5 and $10` unchanged. Escaped `\$`, unmatched `$` and existing `\(…\)` / `\[…\]` are left alone. Text without `$` is returned as is.
+
 ### `toTsv(data)`
 
 ```ts
@@ -73,8 +81,8 @@ toTsv(data: string): string | null
 ```
 
 1. `JSON.parse(data)` inside `try/catch`; invalid JSON → `null`.
-2. If it's flashcards: one row per card whose `f` and `b` both flatten to text with `richTextToString`, `escape(front) + '\t' + escape(back)`.
-3. If it's a quiz: one row per question whose `question` flattens to text and that has an `isCorrect` option whose `text` flattens to text, `escape(question) + '\t' + escape(correctAnswer)`. Rationales and wrong options are dropped.
+2. If it's flashcards: one row per card whose `f` and `b` both flatten to text with `richTextToString`, `format(front) + '\t' + format(back)`, where `format` is `convertMathDelimiters` followed by `escapeCsvField`.
+3. If it's a quiz: one row per question whose `question` flattens to text and that has an `isCorrect` option whose `text` flattens to text, `format(question) + '\t' + format(correctAnswer)`. Rationales and wrong options are dropped.
 4. Invalid items are skipped. Zero rows → `null`.
 5. Rows are joined with `\n`. No BOM (that's added for downloads only).
 
@@ -82,7 +90,7 @@ toTsv(data: string): string | null
 
 - Doubles every `"`.
 - Wraps the field in `"…"` if it contains a **tab, newline or double quote**.
-- Commas and backslashes are left alone. This is intentional: LaTeX such as `\frac{a}{b}` must survive verbatim (see the v1.2 changelog in the root README).
+- Commas and backslashes are left alone. This is intentional: LaTeX such as `\frac{a}{b}` must survive verbatim (see the v1.2 changelog in the root README). Only the `$` delimiters are changed, by `convertMathDelimiters` before escaping.
 
 ### `buildDownloadFilename(notebookTitle, artifactTitle)`
 

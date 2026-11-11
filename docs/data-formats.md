@@ -1,6 +1,6 @@
 # Data Formats
 
-> **Summary:** Input is the JSON string from Gemini Notebook's `app-root[data-app-data]` attribute, in either flashcard or quiz shape. Output is a UTF-8 (with BOM), **tab-separated**, two-column file named `<notebook> - <artifact>.csv`, ready for Anki import as Front/Back. The Copy button puts the same text on the clipboard without the BOM.
+> **Summary:** Input is the JSON string from Gemini Notebook's `app-root[data-app-data]` attribute, in either flashcard or quiz shape. Output is a UTF-8 (with BOM), **tab-separated**, two-column file named `<notebook> - <artifact>.csv`, ready for Anki import as Front/Back. `$…$` math is rewritten to `\(…\)` so it renders in stock Anki. The Copy button puts the same text on the clipboard without the BOM.
 
 ## Input: Gemini Notebook artifact JSON
 
@@ -81,7 +81,16 @@ Detection order in `toTsv`: the flashcard check runs first, then the quiz check.
 | Columns | 1 = Front / Question, 2 = Back / Correct answer |
 | Quoting | A field is wrapped in `"` **only** if it contains a tab, newline or `"` |
 | Escaping | `"` → `""` (RFC 4180 style) |
-| Commas, backslashes, `$`, braces | Left verbatim, so LaTeX is preserved |
+| Math delimiters | `$…$` → `\(…\)` and `$$…$$` → `\[…\]`, which Anki's built-in MathJax renders (see [Math delimiters](#math-delimiters)) |
+| Commas, backslashes, braces | Left verbatim, so LaTeX is preserved |
+
+### Math delimiters
+
+Gemini Notebook writes math in Markdown style (`$\sin(x)$`). Anki only renders `\(…\)` and `\[…\]`, so `convertMathDelimiters` (`src/utils/utils.ts`) rewrites every field before it's escaped:
+
+- `$$…$$` → `\[…\]` first (may span lines), so it isn't read as two inline pairs.
+- `$…$` → `\(…\)` using Pandoc's rules: the opening `$` is followed by a non-space, the closing `$` is preceded by a non-space and not followed by a digit, and there's no newline inside. So prices like `$5 and $10` are left alone.
+- Escaped `\$`, unmatched `$` and existing `\(…\)` / `\[…\]` are left as they are.
 
 ### Example
 
@@ -90,6 +99,7 @@ Input:
 ```json
 {"flashcards":[
   {"f":"Area of a circle","b":"\\pi r^2"},
+  {"f":"Derivative of $\\sin(x)$","b":"$\\cos(x)$"},
   {"f":"Quote: \"to be\"","b":"Hamlet"},
   {"f":"Two\nlines","b":"ok"}
 ]}
@@ -99,6 +109,7 @@ Output (`⇥` = tab):
 
 ```
 ﻿Area of a circle⇥\pi r^2
+Derivative of \(\sin(x)\)⇥\(\cos(x)\)
 "Quote: ""to be"""⇥Hamlet
 "Two
 lines"⇥ok
@@ -114,11 +125,11 @@ The **Copy** button writes the same TSV text to the clipboard, **without** the B
 2. Anki should auto-detect the **Tab** separator. If it doesn't, set *Field separator: Tab*.
 3. Map **Field 1 → Front** and **Field 2 → Back**.
 4. Turn on *Allow HTML in fields* if the cards contain HTML.
-5. For math rendering, use a LaTeX/MathJax-capable note type or add-on. The root README recommends *Better Markdown Anki* (add-on ID `2100166052`).
+5. Math in `\(…\)` / `\[…\]` renders with Anki's built-in MathJax, so no add-on is needed. The root README still mentions *Better Markdown Anki* (add-on ID `2100166052`) as an optional extra.
 
 ## Changing the format
 
-All formatting lives in `toTsv` (`src/utils/utils.ts:138-181`); `createCsvBlob` only adds the BOM. If you change the delimiter or quoting, update:
+All formatting lives in `toTsv` (`src/utils/utils.ts:158-203`) and the `convertMathDelimiters` helper it calls; `createCsvBlob` only adds the BOM. If you change the delimiter or quoting, update:
 - this page,
 - the root `README.md` import instructions,
 - the `.csv` extension in `buildDownloadFilename` (`src/utils/utils.ts`) if the extension changes.
