@@ -15,7 +15,7 @@ The sender uses target origin `'*'`. The receiver validates the message shape (`
 **Fix:** check that `event.origin` is a `*.usercontent.goog` origin, or that `event.source` is the artifact iframe's window.
 
 ## 2. Icons depend on Google's subset icon font
-🟠 · `src/entrypoints/content/index.ts:112-133`
+🟠 · `src/entrypoints/content/index.ts:118-139`
 
 The page loads a "Luminous Symbols" / "Google Symbols" font that contains only the icons Gemini Notebook itself uses. `copy_all`, `save_alt` and `coffee` are **not** in it (they render as letters); `content_copy`, `download`, `local_cafe` and `check` are (checked November 2026). Google can drop any of them.
 **Fix:** when changing icons, test the ligature on the live page (see [DOM Contract](gemini-notebook-dom-contract.md#re-discovering-selectors-after-a-gemini-notebook-update)). A more robust option is inline SVG icons.
@@ -26,10 +26,10 @@ The page loads a "Luminous Symbols" / "Google Symbols" font that contains only t
 The injected code string has a syntax error (a stray `}` after `console.log(...)`) and references an undefined `found`. It never posts data. The Firefox content script `main()` is empty.
 **Fix:** see [Browser Support → What's needed](browser-support.md#whats-needed-to-make-firefox-work).
 
-## 4. Quiz export is lossy and misnamed
-🟡 · `src/utils/utils.ts` (`toTsv`), `src/entrypoints/content/index.ts:147`
+## 4. Quiz export is lossy
+🟡 · `src/utils/utils.ts` (`toTsv`)
 
-Quiz rows keep only the question and the correct answer (no distractors or rationale), and the file is still called `flashcards.csv`. This is a product limitation, not necessarily a bug.
+Quiz rows keep only the question and the correct answer (no distractors or rationale). This is a product limitation, not necessarily a bug.
 
 ## 5. "CSV" file is tab-separated
 🟡 · `src/utils/utils.ts` (`toTsv`, `createCsvBlob`)

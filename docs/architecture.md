@@ -55,7 +55,7 @@ window.parent.postMessage(
 );
 ```
 
-Received by the content script (`src/entrypoints/content/index.ts:48`):
+Received by the content script (`src/entrypoints/content/index.ts:54`):
 
 ```ts
 window.addEventListener('message', (event) => {

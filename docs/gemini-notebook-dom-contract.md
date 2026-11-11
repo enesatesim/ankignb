@@ -19,6 +19,7 @@ None of this is guaranteed by Google. Values marked ✔ were checked on the live
 | 9 | Footer element ✔ | `artifact-viewer .artifact-footer`: `display: flex; flex-wrap: nowrap; overflow: hidden; gap: 16px`, fixed height | `content/index.ts` `FOOTER_SELECTOR`, `utils/fitButtonsToFooter` | No buttons, or buttons clipped |
 | 10 | Native footer button ✔ | `<nb-button class="feedback-button has-icon nb-button …">` → `button.mdc-button` → `.nb-button-content` → `mat-icon` + label `<span>` (thumbs up / down) | `utils/createStyledButton` (cloned as a template) | Falls back to a plain outlined button that may not match the theme |
 | 11 | Icon ligatures ✔ | `content_copy`, `download`, `local_cafe`, `check` exist in the page's "Luminous Symbols" / "Google Symbols" subset font | `content/index.ts` `injectButtons` | Icon shows as letters |
+| 12 | Title inputs ✔ | Notebook: `editable-project-title input.title-input` (fallback: `document.title` = `<notebook> - Gemini Notebook`). Artifact: `artifact-viewer .artifact-header input.artifact-title` (`aria-label="Artifact title"`). Both are read via `.value` | `content/index.ts` `getDownloadFilename` | Download falls back to just one title, or to `flashcards.csv` |
 
 ## Re-discovering selectors after a Gemini Notebook update
 

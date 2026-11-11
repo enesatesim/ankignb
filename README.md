@@ -64,7 +64,7 @@ This add-on has shown the most consistent rendering results with files generated
    * **Field 2 → Back**
 6. Choose your deck and finish the import.
 
-The downloaded file is called `flashcards.csv` but is **tab-separated**; Anki detects this automatically. For quizzes, Front is the question and Back is the correct answer.
+The downloaded file is named after the notebook and the artifact (for example `Biology 101 - Cell Biology Flashcards.csv`). It is **tab-separated** despite the `.csv` extension; Anki detects this automatically. For quizzes, Front is the question and Back is the correct answer.
 
 ---
 

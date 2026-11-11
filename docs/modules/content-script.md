@@ -13,7 +13,7 @@ defineContentScript({
 ```
 
 - `notebook.google.com` is the current host. `notebooklm.google.com` now redirects there and is kept only as a fallback.
-- Chrome only. The Firefox branch (`index.ts:21-25`) defines the same `matches` with an empty `main()`.
+- Chrome only. The Firefox branch (`index.ts:27-31`) defines the same `matches` with an empty `main()`.
 - `allFrames: true`, but `main()` returns immediately in sub-frames (`window.top !== window`). Only the top frame has the footer, and the artifact iframe posts to `window.parent`, which is the top frame.
 - `runAt` is the WXT default (`document_idle`).
 
@@ -21,7 +21,7 @@ defineContentScript({
 
 State: one `payload` (`{ id, tsv, frame }`) for the most recent artifact, where `frame` is the `<iframe>` element that sent it.
 
-### 1. Message listener (`index.ts:48-61`)
+### 1. Message listener (`index.ts:54-67`)
 
 - Accepts only `event.data?.type === 'ANKIGNB_DATA'` with a string `data`.
 - Converts with `toTsv` (see [Utilities](utils.md#totsvdata)). Payloads that fail to parse or give zero rows are ignored, so no buttons appear for them.
@@ -29,11 +29,11 @@ State: one `payload` (`{ id, tsv, frame }`) for the most recent artifact, where 
 - An identical TSV from the same frame is ignored (the background may inject into both the shim document and the blob document).
 - Stores the payload with a new `id` and calls `render()`.
 
-### 2. DOM observer (`index.ts:63-73`)
+### 2. DOM observer (`index.ts:69-79`)
 
 A `MutationObserver` on `document.body` (`childList`, `subtree`) calls `render()` at most once per animation frame. This is what restores the buttons when Angular re-creates the footer (resize, layout change, re-opening the artifact) and what handles a message that arrives before the footer exists.
 
-### 3. `render()` (`index.ts:85-110`)
+### 3. `render()` (`index.ts:91-116`)
 
 1. No payload → nothing to do.
 2. If the payload's iframe is no longer in the DOM (artifact closed, or another one opened), drop the payload and remove the buttons.
@@ -41,7 +41,7 @@ A `MutationObserver` on `document.body` (`childList`, `subtree`) calls `render()
 4. If the footer already has buttons tagged `data-ankignb="<id>"`, stop. Otherwise remove all old `[data-ankignb]` elements and call `injectButtons`.
 5. Observe the footer with a `ResizeObserver` and call `fitButtonsToFooter` (labels collapse to icons when the panel is too narrow; see [Utilities](utils.md#fitbuttonstofooterfooter)).
 
-### 4. `injectButtons(footer, tsv, id)` (`index.ts:112-133`)
+### 4. `injectButtons(footer, tsv, id)` (`index.ts:118-139`)
 
 | Button | Icon | On click |
 |---|---|---|
@@ -51,9 +51,18 @@ A `MutationObserver` on `document.body` (`childList`, `subtree`) calls `render()
 
 Each button gets `title` and `aria-label` text and the `data-ankignb` attribute. Icon names must exist in the page's icon font; see [DOM Contract #11](../gemini-notebook-dom-contract.md#dependencies).
 
-### 5. `handleDownload(tsv)` (`index.ts:142-152`)
+### 5. `handleDownload(tsv)` (`index.ts:148-158`)
 
-Creates a fresh object URL on every click, clicks a temporary `<a download="flashcards.csv">`, and revokes the URL a second later, so the button works repeatedly. The filename is hard-coded to `flashcards.csv`, even for quiz data.
+Creates a fresh object URL on every click, clicks a temporary `<a download="…">`, and revokes the URL a second later, so the button works repeatedly.
+
+### 6. `getDownloadFilename()` (`index.ts:160-169`)
+
+Names the file `<notebook> - <artifact>.csv`, for example `Writing and Evaluating Test Items - Psychometric Testing Flashcards.csv`. Both titles are read at click time, so a renamed notebook or artifact is picked up without reopening it:
+
+- **Notebook:** the value of `editable-project-title input.title-input`, or else `document.title` with the trailing ` - Gemini Notebook` removed.
+- **Artifact:** the value of `artifact-viewer .artifact-header input.artifact-title`.
+
+Both are `<input>`s (the titles are editable), so the code reads `.value`, not `textContent`. `buildDownloadFilename` (see [Utilities](utils.md#builddownloadfilenamenotebooktitle-artifacttitle)) cleans the titles and falls back to `flashcards.csv` when neither is found. See [DOM Contract #12](../gemini-notebook-dom-contract.md#dependencies).
 
 ## Failure modes to keep in mind
 

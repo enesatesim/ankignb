@@ -1,4 +1,5 @@
 import {
+  buildDownloadFilename,
   createCsvBlob,
   createStyledButton,
   fitButtonsToFooter,
@@ -15,6 +16,11 @@ const MESSAGE_TYPE = 'ANKIGNB_DATA';
 
 const FOOTER_SELECTOR = 'artifact-viewer .artifact-footer';
 const ARTIFACT_FRAME_SELECTOR = 'artifact-viewer .app-frame-container iframe';
+// Both titles are editable <input>s, so read `.value` (not textContent) at click time.
+const NOTEBOOK_TITLE_SELECTOR = 'editable-project-title input.title-input';
+const ARTIFACT_TITLE_SELECTOR = 'artifact-viewer .artifact-header input.artifact-title';
+// document.title is "<notebook> - Gemini Notebook"; used when the title input isn't found.
+const DOCUMENT_TITLE_SUFFIX = / - (Gemini Notebook|NotebookLM)$/;
 
 let contentScriptEntrypoint;
 
@@ -144,11 +150,22 @@ if (import.meta.env.FIREFOX) {
         const url = URL.createObjectURL(createCsvBlob(tsv));
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'flashcards.csv'; // Tab-delimited despite the name; Anki relies on it.
+        link.download = getDownloadFilename(); // Tab-delimited despite .csv; Anki relies on it.
         document.body.appendChild(link);
         link.click();
         link.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      /** `<notebook> - <artifact>.csv`, read at click time so renames are picked up. */
+      function getDownloadFilename(): string {
+        const notebookTitle =
+          document.querySelector<HTMLInputElement>(NOTEBOOK_TITLE_SELECTOR)?.value ||
+          (DOCUMENT_TITLE_SUFFIX.test(document.title)
+            ? document.title.replace(DOCUMENT_TITLE_SUFFIX, '')
+            : '');
+        const artifactTitle = document.querySelector<HTMLInputElement>(ARTIFACT_TITLE_SELECTOR)?.value;
+        return buildDownloadFilename(notebookTitle, artifactTitle);
       }
     },
   });

@@ -32,7 +32,7 @@ Example: exporting quiz distractors, or a new Gemini Notebook artifact such as a
 1. Add the payload interface to `src/types.ts`. Capture a real payload first. See [DOM Contract → Re-discovering](gemini-notebook-dom-contract.md#re-discovering-selectors-after-a-gemini-notebook-update).
 2. Add an `isXxxData` guard to `src/utils/typeguards.ts` that follows the existing shallow pattern. Ideally also validate the item fields.
 3. In `toTsv`, add an `if (isXxxData(parsedData)) { … rows.push(...) }` block. Pass every field through `escapeCsvField`, and keep the 2-column Front/Back layout unless you also update the Anki import docs.
-4. If the filename should differ per type, change `handleDownload` in `content/index.ts`. It's currently hard-coded to `flashcards.csv`.
+4. The download is named after the notebook and artifact titles (`buildDownloadFilename` in `src/utils/utils.ts`), so a new type usually needs no filename change.
 5. Update [Data Formats](data-formats.md) and, if the change is user-visible, the root `README.md`.
 
 ## Recipe: add a footer button

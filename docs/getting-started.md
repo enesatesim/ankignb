@@ -58,7 +58,7 @@ WXT launches a fresh Chrome profile with the extension installed. That profile i
 2. In **Studio**, open a generated **Flashcards** (or **Quiz**) artifact.
 3. Check that **Copy**, **Download** and a coffee icon button appear **once** in the artifact footer, next to the thumbs up / down buttons, in the same style. In a narrow Studio panel they show icons only; widen the panel and the labels should appear.
 4. Click **Copy** (the icon turns into a check) and paste somewhere: one `front<TAB>back` row per card, no JSON.
-5. Click **Download** twice. Two `flashcards.csv` files should be saved, each with one tab-separated row per card.
+5. Click **Download** twice. Two files named `<notebook> - <artifact>.csv` should be saved (the browser adds ` (1)` to the second), each with one tab-separated row per card.
 6. Resize the window and close/re-open the artifact. The buttons should come back, never duplicated.
 7. Open a non-card artifact (audio, report). No AnkiGNB buttons should appear there.
 8. Import the file into Anki (Field 1 → Front, Field 2 → Back).

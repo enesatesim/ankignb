@@ -180,6 +180,35 @@ export const toTsv = (data: string): string | null => {
   return rows.length ? rows.join('\n') : null;
 };
 
+/**
+ * Builds the download filename `<notebook> - <artifact>.csv` from the two titles.
+ *
+ * Characters that Windows, macOS or Linux reject in filenames are replaced, whitespace is
+ * collapsed, and each part is capped so the full name stays well under OS limits. If one
+ * title is missing (or both are the same) only the other is used. If both are missing it
+ * falls back to `flashcards.csv`.
+ */
+export const buildDownloadFilename = (
+  notebookTitle: string | null | undefined,
+  artifactTitle: string | null | undefined
+): string => {
+  const clean = (title: string | null | undefined) =>
+    (title ?? '')
+      .replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/^\.+|\.+$/g, '') // No leading dots (hidden files) or trailing dots (Windows).
+      .trim()
+      .slice(0, 100)
+      .trim();
+
+  const notebook = clean(notebookTitle);
+  const artifact = clean(artifactTitle);
+  const parts = notebook && artifact && notebook !== artifact ? [notebook, artifact] : [notebook || artifact];
+  const base = parts.filter(Boolean).join(' - ') || 'flashcards';
+  return `${base}.csv`;
+};
+
 /** Wraps TSV text in a UTF-8 (with BOM) blob for download. */
 export const createCsvBlob = (tsv: string): Blob => {
   const BOM = '﻿'; // UTF-8

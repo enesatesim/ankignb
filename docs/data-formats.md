@@ -1,6 +1,6 @@
 # Data Formats
 
-> **Summary:** Input is the JSON string from Gemini Notebook's `app-root[data-app-data]` attribute, in either flashcard or quiz shape. Output is a UTF-8 (with BOM), **tab-separated**, two-column file named `flashcards.csv`, ready for Anki import as Front/Back. The Copy button puts the same text on the clipboard without the BOM.
+> **Summary:** Input is the JSON string from Gemini Notebook's `app-root[data-app-data]` attribute, in either flashcard or quiz shape. Output is a UTF-8 (with BOM), **tab-separated**, two-column file named `<notebook> - <artifact>.csv`, ready for Anki import as Front/Back. The Copy button puts the same text on the clipboard without the BOM.
 
 ## Input: Gemini Notebook artifact JSON
 
@@ -74,7 +74,7 @@ Detection order in `toTsv`: the flashcard check runs first, then the quiz check.
 |---|---|
 | Encoding | UTF-8 with BOM (`﻿` prefix), which helps Excel and Anki detect UTF-8 |
 | MIME | `text/csv;charset=utf-8` |
-| Filename | `flashcards.csv` (also for quizzes) |
+| Filename | `<notebook> - <artifact>.csv` (e.g. `Biology 101 - Cell Biology Flashcards.csv`), from the titles shown in Gemini Notebook. Falls back to `flashcards.csv` if neither title is found |
 | Field delimiter | **Tab** (`\t`), not comma |
 | Record delimiter | `\n` (LF), no trailing newline |
 | Header row | None |
@@ -110,7 +110,7 @@ The **Copy** button writes the same TSV text to the clipboard, **without** the B
 
 ## Importing into Anki
 
-1. **File → Import**, then pick `flashcards.csv`.
+1. **File → Import**, then pick the downloaded `.csv` file.
 2. Anki should auto-detect the **Tab** separator. If it doesn't, set *Field separator: Tab*.
 3. Map **Field 1 → Front** and **Field 2 → Back**.
 4. Turn on *Allow HTML in fields* if the cards contain HTML.
@@ -121,7 +121,7 @@ The **Copy** button writes the same TSV text to the clipboard, **without** the B
 All formatting lives in `toTsv` (`src/utils/utils.ts:138-181`); `createCsvBlob` only adds the BOM. If you change the delimiter or quoting, update:
 - this page,
 - the root `README.md` import instructions,
-- the `link.download` filename in `src/entrypoints/content/index.ts:147` if the extension changes.
+- the `.csv` extension in `buildDownloadFilename` (`src/utils/utils.ts`) if the extension changes.
 
 See [Contributing → Adding a new data type or export format](contributing.md#recipe-add-a-new-artifact-type-or-export-format).
 

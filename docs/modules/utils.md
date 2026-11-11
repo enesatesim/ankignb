@@ -84,6 +84,14 @@ toTsv(data: string): string | null
 - Wraps the field in `"…"` if it contains a **tab, newline or double quote**.
 - Commas and backslashes are left alone. This is intentional: LaTeX such as `\frac{a}{b}` must survive verbatim (see the v1.2 changelog in the root README).
 
+### `buildDownloadFilename(notebookTitle, artifactTitle)`
+
+```ts
+buildDownloadFilename(notebookTitle?: string | null, artifactTitle?: string | null): string
+```
+
+Returns `<notebook> - <artifact>.csv`. Each title has characters that are invalid in Windows/macOS/Linux filenames (`\ / : * ? " < > |` and control characters) replaced with spaces, whitespace collapsed, leading/trailing dots removed, and is capped at 100 characters. If only one title is present, or both are the same, only that one is used. If neither is present the result is `flashcards.csv`. The DOM lookups live in the content script's `getDownloadFilename`.
+
 ### `createCsvBlob(tsv)`
 
 ```ts
