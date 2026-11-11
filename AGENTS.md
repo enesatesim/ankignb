@@ -24,7 +24,7 @@ Start with [docs/README.md](docs/README.md). It has quick facts, a page index an
 | Touching the input JSON or the CSV/TSV output | [data-formats.md](docs/data-formats.md) |
 | Debugging "the extension stopped working" | [gemini-notebook-dom-contract.md](docs/gemini-notebook-dom-contract.md) |
 | Working on Firefox or permissions | [browser-support.md](docs/browser-support.md) |
-| Bumping the version or preparing a release | [build-and-release.md](docs/build-and-release.md) |
+| Bumping the version or preparing a release | [build-and-release.md](docs/build-and-release.md), then follow [releasing-updates.md](docs/releasing-updates.md) step by step |
 | About to report or fix a bug | [known-issues.md](docs/known-issues.md) |
 | Making any change, before you open a PR | [contributing.md](docs/contributing.md) |
 | Unsure what a term means | [glossary.md](docs/glossary.md) |

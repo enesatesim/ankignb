@@ -40,6 +40,7 @@ This folder is the technical documentation for developers and AI agents. For end
 - [Gemini Notebook DOM Contract](gemini-notebook-dom-contract.md): every external host, selector, attribute and icon name the extension depends on
 - [Browser Support](browser-support.md): Chrome MV3 vs Firefox MV2, permissions
 - [Build & Release](build-and-release.md): versioning, zipping, store submission
+- [Releasing an Update](releasing-updates.md): step-by-step checklist for shipping a new version to the Chrome Web Store
 - [Known Issues](known-issues.md): bugs and tech debt, with locations and suggested fixes
 - [Contributing](contributing.md): conventions, recipes, pre-PR checklist
 - [Glossary](glossary.md)

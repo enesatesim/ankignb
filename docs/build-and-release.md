@@ -31,8 +31,8 @@ npm run zip:firefox
 ## Publishing
 
 ### Chrome Web Store
-- AnkiGNB is **not published yet**. The existing listing (`https://chromewebstore.google.com/detail/ecoealfdeebafjpmhjdlbdgpgegjeaem`) belongs to the original AnkiNLM by lkmss; publish the fork as a new item.
-- Upload the Chrome zip in the developer dashboard.
+- AnkiGNB v1.3 was **submitted for review on 2026-11-11** as a new item. Add its store URL and item ID here once it is approved. The older listing (`https://chromewebstore.google.com/detail/ecoealfdeebafjpmhjdlbdgpgegjeaem`) belongs to the original AnkiNLM by lkmss. Don't upload to it.
+- **For every later release, follow [Releasing an Update](releasing-updates.md)**, the step-by-step checklist.
 - Permission justifications should match the table in [Browser Support](browser-support.md#chrome-mv3).
 
 ### Firefox Add-ons (AMO)
