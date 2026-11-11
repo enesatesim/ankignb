@@ -1,10 +1,10 @@
 # Data Formats
 
-> **Summary:** Input is the JSON string from NotebookLM's `app-root[data-app-data]` attribute, in either flashcard or quiz shape. Output is a UTF-8 (with BOM), **tab-separated**, two-column file named `flashcards.csv`, ready for Anki import as Front/Back.
+> **Summary:** Input is the JSON string from Gemini Notebook's `app-root[data-app-data]` attribute, in either flashcard or quiz shape. Output is a UTF-8 (with BOM), **tab-separated**, two-column file named `flashcards.csv`, ready for Anki import as Front/Back. The Copy button puts the same text on the clipboard without the BOM.
 
-## Input: NotebookLM artifact JSON
+## Input: Gemini Notebook artifact JSON
 
-Source: the `data-app-data` attribute on `<app-root>` inside the artifact iframe (see [NotebookLM DOM Contract](notebooklm-dom-contract.md)). Shapes are defined in `src/types.ts`, derived from observation. **The payload may contain other fields that the extension ignores.**
+Source: the `data-app-data` attribute on `<app-root>` inside the artifact iframe (see [Gemini Notebook DOM Contract](gemini-notebook-dom-contract.md)). Shapes are defined in `src/types.ts`, derived from observation. **The payload may contain other fields that the extension ignores.**
 
 ### Flashcards
 
@@ -38,9 +38,9 @@ Source: the `data-app-data` attribute on `<app-root>` inside the artifact iframe
 }
 ```
 
-Only `question` and the **first** option with `isCorrect: true` are exported. Questions without a correct option are skipped.
+Only `question` and the **first** option with `isCorrect: true` are exported. Questions without a correct option are skipped. Items whose text fields aren't strings are skipped too, and a payload that yields zero rows is ignored (no buttons).
 
-Detection order in `createCsvBlob`: the flashcard check runs first, then the quiz check. Both checks are independent `if` blocks, so a payload with both keys would export both sets of rows.
+Detection order in `toTsv`: the flashcard check runs first, then the quiz check. Both checks are independent `if` blocks, so a payload with both keys would export both sets of rows.
 
 ## Output format
 
@@ -80,7 +80,7 @@ lines"⇥ok
 
 ### Copy button output
 
-The **Copy** button currently writes the **raw input JSON** to the clipboard, not the TSV above. See [Known Issues #1](known-issues.md#1-copy-button-copies-raw-json-not-the-csv).
+The **Copy** button writes the same TSV text to the clipboard, **without** the BOM.
 
 ## Importing into Anki
 
@@ -92,13 +92,13 @@ The **Copy** button currently writes the **raw input JSON** to the clipboard, no
 
 ## Changing the format
 
-All formatting lives in `createCsvBlob` (`src/utils/utils.ts:44-78`). If you change the delimiter or quoting, update:
+All formatting lives in `toTsv` (`src/utils/utils.ts:110-146`); `createCsvBlob` only adds the BOM. If you change the delimiter or quoting, update:
 - this page,
 - the root `README.md` import instructions,
-- the `link.download` filename in `src/entrypoints/content/index.ts:41` if the extension changes.
+- the `link.download` filename in `src/entrypoints/content/index.ts:147` if the extension changes.
 
 See [Contributing → Adding a new data type or export format](contributing.md#recipe-add-a-new-artifact-type-or-export-format).
 
 ---
 
-**Related pages:** [Utilities](modules/utils.md) · [NotebookLM DOM Contract](notebooklm-dom-contract.md)
+**Related pages:** [Utilities](modules/utils.md) · [Gemini Notebook DOM Contract](gemini-notebook-dom-contract.md)

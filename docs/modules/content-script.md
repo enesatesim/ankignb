@@ -1,68 +1,69 @@
 # Module: Content script
 
-> **Summary:** `src/entrypoints/content/index.ts` runs in every frame of NotebookLM. It tracks the artifact footer element, waits for the `NOTEBOOKLM_DATA` message from the artifact iframe, then converts the data and injects the **Copy**, **Download** and **Support (coffee)** buttons.
+> **Summary:** `src/entrypoints/content/index.ts` runs in the top frame of Gemini Notebook. It waits for the `ANKIGNB_DATA` message from the artifact iframe, converts the data to TSV, and keeps the **Copy**, **Download** and **Support (coffee)** buttons present in the open artifact's footer, re-adding them whenever Angular re-renders it.
 
 ## Definition
 
 ```ts
 defineContentScript({
-  matches: ['https://notebooklm.google.com/*'],
+  matches: ['https://notebook.google.com/*', 'https://notebooklm.google.com/*'],
   allFrames: true,
   main() { ... },
 });
 ```
 
-- Chrome only. The Firefox branch (`index.ts:5-9`) defines the same `matches` with an empty `main()`.
-- `allFrames: true` means an instance also runs in any NotebookLM-origin sub-frames. In practice the top frame does the work.
+- `notebook.google.com` is the current host. `notebooklm.google.com` now redirects there and is kept only as a fallback.
+- Chrome only. The Firefox branch (`index.ts:21-25`) defines the same `matches` with an empty `main()`.
+- `allFrames: true`, but `main()` returns immediately in sub-frames (`window.top !== window`). Only the top frame has the footer, and the artifact iframe posts to `window.parent`, which is the top frame.
 - `runAt` is the WXT default (`document_idle`).
 
 ## Runtime behavior (`main`)
 
-### 1. Footer discovery (`index.ts:15-36`)
+State: one `payload` (`{ id, tsv, frame }`) for the most recent artifact, where `frame` is the `<iframe>` element that sent it.
 
-A `MutationObserver` on `document.body` (`childList`, `subtree`) looks at every **added** node. When one matches `artifact-viewer` and has the class `ng-star-inserted` (an Angular marker for nodes inserted by structural directives), it stores:
+### 1. Message listener (`index.ts:48-61`)
 
-```ts
-footerContainer = node.querySelector('.artifact-viewer-container .artifact-footer');
-```
+- Accepts only `event.data?.type === 'ANKIGNB_DATA'` with a string `data`.
+- Converts with `toTsv` (see [Utilities](utils.md#totsvdata)). Payloads that fail to parse or give zero rows are ignored, so no buttons appear for them.
+- `findSourceFrame` matches `event.source` against `artifact-viewer .app-frame-container iframe`. If none matches it falls back to the first such iframe.
+- An identical TSV from the same frame is ignored (the background may inject into both the shim document and the blob document).
+- Stores the payload with a new `id` and calls `render()`.
 
-The observer is never disconnected, and only the most recently inserted `artifact-viewer` is remembered.
+### 2. DOM observer (`index.ts:63-73`)
 
-### 2. Message listener (`index.ts:32-34`)
+A `MutationObserver` on `document.body` (`childList`, `subtree`) calls `render()` at most once per animation frame. This is what restores the buttons when Angular re-creates the footer (resize, layout change, re-opening the artifact) and what handles a message that arrives before the footer exists.
 
-```ts
-window.addEventListener('message', (event) => {
-  if (event.data.type === 'NOTEBOOKLM_DATA') handleNotebookLMData(event.data.data);
-});
-```
+### 3. `render()` (`index.ts:85-110`)
 
-There's no origin or shape validation. A message whose `data` is `null` would throw on `.type`.
+1. No payload → nothing to do.
+2. If the payload's iframe is no longer in the DOM (artifact closed, or another one opened), drop the payload and remove the buttons.
+3. Look up `artifact-viewer .artifact-footer` fresh. None → wait for the next mutation.
+4. If the footer already has buttons tagged `data-ankignb="<id>"`, stop. Otherwise remove all old `[data-ankignb]` elements and call `injectButtons`.
+5. Observe the footer with a `ResizeObserver` and call `fitButtonsToFooter` (labels collapse to icons when the panel is too narrow; see [Utilities](utils.md#fitbuttonstofooterfooter)).
 
-### 3. `handleNotebookLMData(data: string)` (`index.ts:48-75`)
+### 4. `injectButtons(footer, tsv, id)` (`index.ts:112-133`)
 
-1. `createCsvBlob(data)` parses the JSON and returns a TSV `Blob` (see [Utilities](utils.md#createcsvblobdata) and [Data Formats](../data-formats.md)).
-2. It returns early if there's no blob **or no `footerContainer` yet**.
-3. **Copy** button (`copy_all` icon): `navigator.clipboard.writeText(data)`. Note that this writes the **raw JSON**, not the TSV ([Known Issue #1](../known-issues.md#1-copy-button-copies-raw-json-not-the-csv)).
-4. **Download** button (`save_alt` icon): creates one object URL up front, and `handleDownload(url)` clicks a temporary `<a download="flashcards.csv">`, then **revokes** the URL ([Known Issue #5](../known-issues.md#5-download-works-only-once-per-render)).
-5. **Coffee** button (`coffee` icon, no label, `title="Buy Creator a Coffe :)"`): opens `https://buymeacoffee.com/lkmss`.
-6. Every child of the footer (including NotebookLM's own buttons) gets inline styles: `padding: 0 20px`, `margin-right: 10px`, `color: #fff`.
+| Button | Icon | On click |
+|---|---|---|
+| **Copy** | `content_copy` | `navigator.clipboard.writeText(tsv)` (no BOM), then the icon flashes `check` for 1.5 s |
+| **Download** | `download` | `handleDownload(tsv)` |
+| Coffee (icon only) | `local_cafe` | Opens `https://buymeacoffee.com/lkmss` (the original AnkiNLM author) |
 
-### 4. `handleDownload(url)` (`index.ts:38-46`)
+Each button gets `title` and `aria-label` text and the `data-ankignb` attribute. Icon names must exist in the page's icon font; see [DOM Contract #11](../gemini-notebook-dom-contract.md#dependencies).
 
-The standard anchor-click download. The filename is hard-coded to `flashcards.csv`, even for quiz data.
+### 5. `handleDownload(tsv)` (`index.ts:142-152`)
+
+Creates a fresh object URL on every click, clicks a temporary `<a download="flashcards.csv">`, and revokes the URL a second later, so the button works repeatedly. The filename is hard-coded to `flashcards.csv`, even for quiz data.
 
 ## Failure modes to keep in mind
 
 | Situation | Result |
 |---|---|
-| Message arrives before `artifact-viewer` is inserted | No buttons (early return) |
-| Same artifact re-renders, or another artifact is opened | Another full set of buttons is appended (duplicates) |
-| Window resize causes Angular to re-create the footer | `footerContainer` points to a detached node, so the buttons vanish (documented in the popup) |
-| `data-app-data` is not valid JSON | `JSON.parse` throws inside the listener and nothing is shown |
-| JSON is neither flashcards nor quiz | An empty blob (BOM only); buttons are still shown |
-
-All of these are tracked in [Known Issues](../known-issues.md).
+| Footer or viewer selector changes | No buttons. See [DOM Contract](../gemini-notebook-dom-contract.md) |
+| Artifact iframe moves out of `.app-frame-container` | Source frame can't be identified; buttons show only while some artifact iframe exists |
+| Icon name missing from the page's subset font | The icon shows as its first letter(s) |
+| JSON is neither flashcards nor quiz | Ignored; no buttons |
 
 ---
 
-**Related pages:** [Background](background.md) · [Utilities](utils.md) · [NotebookLM DOM Contract](../notebooklm-dom-contract.md)
+**Related pages:** [Background](background.md) · [Utilities](utils.md) · [Gemini Notebook DOM Contract](../gemini-notebook-dom-contract.md)

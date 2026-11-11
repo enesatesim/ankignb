@@ -1,77 +1,154 @@
-import { createCsvBlob, createStyledButton } from '@/utils/utils';
+import {
+  createCsvBlob,
+  createStyledButton,
+  fitButtonsToFooter,
+  INJECTED_ATTR,
+  toTsv,
+} from '@/utils/utils';
+
+// Gemini Notebook (formerly NotebookLM). The old host now redirects to the new one; it is
+// kept as a fallback in case the redirect isn't rolled out everywhere.
+const MATCHES = ['https://notebook.google.com/*', 'https://notebooklm.google.com/*'];
+
+// Keep in sync with the function injected by src/entrypoints/background/index.ts.
+const MESSAGE_TYPE = 'ANKIGNB_DATA';
+
+const FOOTER_SELECTOR = 'artifact-viewer .artifact-footer';
+const ARTIFACT_FRAME_SELECTOR = 'artifact-viewer .app-frame-container iframe';
 
 let contentScriptEntrypoint;
 
 if (import.meta.env.FIREFOX) {
   contentScriptEntrypoint = defineContentScript({
-    matches: ['https://notebooklm.google.com/*'],
+    matches: MATCHES,
     main() {},
   });
 } else {
   contentScriptEntrypoint = defineContentScript({
-    matches: ['https://notebooklm.google.com/*'],
+    matches: MATCHES,
     allFrames: true,
     main() {
-      let footerContainer: Element | null;
-      const observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-          for (const node of mutation.addedNodes) {
-            if (
-              node instanceof HTMLElement &&
-              node.matches('artifact-viewer') &&
-              node.classList.contains('ng-star-inserted')
-            ) {
-              footerContainer = node.querySelector(
-                '.artifact-viewer-container .artifact-footer'
-              );
-            }
-          }
-        }
+      if (window.top !== window) return; // Only the top frame hosts the artifact footer.
+
+      interface Payload {
+        id: number;
+        tsv: string;
+        /** The artifact iframe that sent the data, when it could be identified. */
+        frame: HTMLIFrameElement | null;
+      }
+
+      let payload: Payload | null = null;
+      let nextId = 1;
+
+      // Collapse labels to icons when the Studio panel is too narrow for them.
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) fitButtonsToFooter(entry.target);
       });
 
       window.addEventListener('message', (event) => {
-        if (event.data.type === 'NOTEBOOKLM_DATA') handleNotebookLMData(event.data.data);
+        const message = event.data;
+        if (!message || typeof message !== 'object' || message.type !== MESSAGE_TYPE) return;
+        if (typeof message.data !== 'string') return;
+
+        const tsv = toTsv(message.data);
+        if (!tsv) return;
+
+        const frame = findSourceFrame(event.source);
+        if (payload && payload.tsv === tsv && payload.frame === frame) return; // Duplicate post.
+
+        payload = { id: nextId++, tsv, frame };
+        render();
       });
 
-      observer.observe(document.body, { childList: true, subtree: true });
+      // Angular re-creates the footer on resize and when artifacts are switched, so re-check
+      // after every DOM change (at most once per animation frame).
+      let scheduled = false;
+      new MutationObserver(() => {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(() => {
+          scheduled = false;
+          render();
+        });
+      }).observe(document.body, { childList: true, subtree: true });
 
-      function handleDownload(url: string) {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'flashcards.csv';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+      function findSourceFrame(source: MessageEventSource | null): HTMLIFrameElement | null {
+        if (!source) return null;
+        const frames = Array.from(document.querySelectorAll<HTMLIFrameElement>(ARTIFACT_FRAME_SELECTOR));
+        return frames.find((f) => f.contentWindow === source) ?? frames[0] ?? null;
       }
 
-      function handleNotebookLMData(data: string) {
-        const blob = createCsvBlob(data);
-        if (!blob || !footerContainer) return;
+      function removeInjected() {
+        document.querySelectorAll(`[${INJECTED_ATTR}]`).forEach((el) => el.remove());
+      }
 
-        const copyBtn = createStyledButton(footerContainer, 'Copy', 'copy_all');
-        copyBtn.addEventListener('click', () => {
-          navigator.clipboard.writeText(data);
+      function render() {
+        if (!payload) return;
+
+        // The artifact that sent the data is gone (closed, or another artifact opened).
+        const stillOpen = payload.frame
+          ? payload.frame.isConnected
+          : !!document.querySelector(ARTIFACT_FRAME_SELECTOR);
+        if (!stillOpen) {
+          payload = null;
+          removeInjected();
+          resizeObserver.disconnect();
+          return;
+        }
+
+        const footer = document.querySelector(FOOTER_SELECTOR);
+        if (!footer) return;
+
+        const id = String(payload.id);
+        if (footer.querySelector(`[${INJECTED_ATTR}="${id}"]`)) return; // Already up to date.
+
+        removeInjected();
+        injectButtons(footer, payload.tsv, id);
+        resizeObserver.disconnect();
+        resizeObserver.observe(footer);
+        fitButtonsToFooter(footer);
+      }
+
+      function injectButtons(footer: Element, tsv: string, id: string) {
+        const copyBtn = createStyledButton(footer, 'Copy', 'content_copy', 'Copy cards as tab-separated text');
+        copyBtn.addEventListener('click', async () => {
+          await navigator.clipboard.writeText(tsv);
+          flashIcon(copyBtn, 'check', 'content_copy');
         });
 
-        const url = URL.createObjectURL(blob);
-        const downloadBtn = createStyledButton(footerContainer, 'Download', 'save_alt');
+        const downloadBtn = createStyledButton(
+          footer,
+          'Download',
+          'download',
+          'Download cards as an Anki import file'
+        );
+        downloadBtn.addEventListener('click', () => handleDownload(tsv));
 
-        downloadBtn.addEventListener('click', () => handleDownload(url));
-        const donateBtn = createStyledButton(footerContainer, '', 'coffee', [], ['padding: 0']);
-
-        const coffeIcon = donateBtn.querySelector('mat-icon') as HTMLElement;
-        if (coffeIcon) coffeIcon.style.margin = '0px';
-        donateBtn.setAttribute('title', 'Buy Creator a Coffe :)');
-        Array.from(footerContainer.children).forEach((element) => {
-          const el = element as HTMLElement;
-          el.style.padding = '0px 20px 0px 20px';
-          el.style.marginRight = '10px';
-          el.style.color = '#ffffff';
-        });
+        const donateBtn = createStyledButton(footer, '', 'local_cafe', 'Buy the original creator a coffee');
         donateBtn.addEventListener('click', () => {
-          window.open('https://buymeacoffee.com/lkmss', '_blank');
+          window.open('https://buymeacoffee.com/lkmss', '_blank', 'noopener');
         });
+
+        for (const btn of [copyBtn, downloadBtn, donateBtn]) btn.setAttribute(INJECTED_ATTR, id);
+      }
+
+      function flashIcon(button: HTMLElement, icon: string, original: string) {
+        const matIcon = button.querySelector('mat-icon');
+        if (!matIcon) return;
+        matIcon.textContent = icon;
+        setTimeout(() => (matIcon.textContent = original), 1500);
+      }
+
+      function handleDownload(tsv: string) {
+        // A fresh object URL per click, so the button works more than once.
+        const url = URL.createObjectURL(createCsvBlob(tsv));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'flashcards.csv'; // Tab-delimited despite the name; Anki relies on it.
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
     },
   });

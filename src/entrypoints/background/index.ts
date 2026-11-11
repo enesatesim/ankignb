@@ -4,10 +4,10 @@ let backgroundEntrypoint;
 
 if (import.meta.env.FIREFOX) {
   backgroundEntrypoint = defineBackground(() => {
-    console.log('firefox background iniciado');
+    console.log('AnkiGNB Firefox background started');
 
     if (!browser.webNavigation) {
-      console.error('browser.webNavigation não está disponível');
+      console.error('browser.webNavigation is not available');
       return;
     }
 
@@ -116,37 +116,60 @@ if (import.meta.env.FIREFOX) {
   });
 } else {
   backgroundEntrypoint = defineBackground(() => {
-    console.log('background script iniciado');
+    console.log('AnkiGNB background started');
 
     if (!chrome.webNavigation) {
-      console.error('chrome.webNavigation não está disponível');
+      console.error('chrome.webNavigation is not available');
       return;
     }
 
+    // Gemini Notebook renders Studio artifacts in a sandboxed sub-frame. The frame loads
+    // `*.scf.usercontent.goog/.../shim.html` and then shows the artifact from a `blob:https://`
+    // document. Inject into both: the reader is a no-op in frames that hold no artifact data.
+    const isArtifactFrame = (url: string) =>
+      url.startsWith('blob:https://') || /^https:\/\/[^/]+\.usercontent\.goog\//.test(url);
+
     chrome.webNavigation.onCommitted.addListener(async (details) => {
-      if (details.frameId <= 0 || !details.url.startsWith('blob:https://')) return;
+      if (details.frameId <= 0 || !isArtifactFrame(details.url)) return;
       try {
         await chrome.scripting.executeScript({
           target: {
             tabId: details.tabId,
             frameIds: [details.frameId],
-            // matchOriginAsFallback: true,
-          } as chrome.scripting.InjectionTarget & { matchOriginAsFallback: boolean },
+          },
           func: () => {
-            console.log('script injetado no iframe');
-            const dataElement = document.body.querySelector('app-root');
-            if (!dataElement) return;
+            // Keep the message type in sync with src/entrypoints/content/index.ts.
+            const MESSAGE_TYPE = 'ANKIGNB_DATA';
+            const SELECTOR = 'app-root[data-app-data]';
+            const TIMEOUT_MS = 10000;
 
-            const data = dataElement.getAttribute('data-app-data');
-            if (!data || typeof data !== 'string') return;
+            const post = (el: Element) => {
+              const data = el.getAttribute('data-app-data');
+              if (!data) return;
+              window.parent.postMessage({ type: MESSAGE_TYPE, data }, '*');
+            };
 
-            window.parent.postMessage(
-              {
-                type: 'NOTEBOOKLM_DATA',
-                data,
-              },
-              '*'
-            );
+            const existing = document.querySelector(SELECTOR);
+            if (existing) {
+              post(existing);
+              return;
+            }
+
+            // The attribute may be rendered after injection: wait for it, then give up.
+            const observer = new MutationObserver(() => {
+              const el = document.querySelector(SELECTOR);
+              if (!el) return;
+              observer.disconnect();
+              clearTimeout(timer);
+              post(el);
+            });
+            observer.observe(document.documentElement, {
+              childList: true,
+              subtree: true,
+              attributes: true,
+              attributeFilter: ['data-app-data'],
+            });
+            const timer = setTimeout(() => observer.disconnect(), TIMEOUT_MS);
           },
         });
       } catch (error: unknown) {

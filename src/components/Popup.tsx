@@ -1,12 +1,12 @@
 import React from 'react';
-import { CoffeeIcon, GithubIcon, InfoIcon, AlertCircleIcon, Bug } from 'lucide-react';
+import { CoffeeIcon, GithubIcon, InfoIcon, Bug } from 'lucide-react';
 const Popup = () => {
   return (
     <div className='popup-container'>
       {/* Header */}
       <div className='popup-header'>
-        <h1 className='popup-title'>AnkiNLM</h1>
-        <div className='popup-version'>v1.2</div>
+        <h1 className='popup-title'>AnkiGNB</h1>
+        <div className='popup-version'>v1.3</div>
       </div>
       {/* Content */}
       <div className='popup-content'>
@@ -15,22 +15,9 @@ const Popup = () => {
           <InfoIcon className='icon icon-info' />
           <p className='text-content'>
             The <span className='highlight'>Copy</span> and{' '}
-            <span className='highlight'>Download</span> buttons will appear on the footer of the
-            NotebookLM Studio interface.
+            <span className='highlight'>Download</span> buttons will appear on the footer of a
+            Flashcards or Quiz artifact in the Gemini Notebook Studio panel.
           </p>
-        </div>
-        {/* Warning */}
-        <div className='content-section'>
-          <AlertCircleIcon className='icon icon-warning' />
-          <div className='text-content'>
-            <p>
-              <span className='warning-highlight'>Note:</span> Resizing the window may cause the
-              buttons to disappear. If this happens, please refresh the page.
-            </p>
-            <p className='warning-detail'>
-              This bug will be fixed in future updates. A history section is also planned.
-            </p>
-          </div>
         </div>
         <div className='divider'></div>
         {/* Links */}
@@ -40,18 +27,30 @@ const Popup = () => {
             target='_blank'
             rel='noopener noreferrer'
             className='link-button'
+            title='Buy the original creator a coffee'
           >
             <CoffeeIcon className='icon' />
             <span>Support</span>
+          </a>
+          <a
+            href='https://github.com/enesatesim/ankignb'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='link-button'
+            title='AnkiGNB on GitHub'
+          >
+            <GithubIcon className='icon' />
+            <span>AnkiGNB</span>
           </a>
           <a
             href='https://github.com/maialks'
             target='_blank'
             rel='noopener noreferrer'
             className='link-button'
+            title='Original AnkiNLM author on GitHub'
           >
             <GithubIcon className='icon' />
-            <span>GitHub</span>
+            <span>AnkiNLM</span>
           </a>
           <a
             href='https://forms.gle/GaEgRg9tZ9e2EVco9'
@@ -66,7 +65,7 @@ const Popup = () => {
       </div>
       {/* Footer */}
       <div className='popup-footer'>
-        <p className='footer-text'>by lkmss</p>
+        <p className='footer-text'>by lkmss · fork by enesatesim</p>
       </div>
     </div>
   );

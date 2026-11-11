@@ -6,14 +6,14 @@
 
 | Location | Current | Notes |
 |---|---|---|
-| `wxt.config.ts` → `manifest.version` | `'1.2'` | **Source of truth** for the shipped manifest |
-| `src/components/Popup.tsx` → `.popup-version` | `v1.2` | Shown in the popup |
-| `README.md` → "v1.2 Changelog" | `v1.2` | User-facing changelog |
-| `package.json` → `version` | `0.0.0` | Not used by the manifest, because `wxt.config.ts` overrides it. Still the WXT starter value |
+| `wxt.config.ts` → `manifest.version` | `'1.3'` | **Source of truth** for the shipped manifest |
+| `src/components/Popup.tsx` → `.popup-version` | `v1.3` | Shown in the popup |
+| `README.md` → "v1.3 Changelog" | `v1.3` | User-facing changelog |
+| `package.json` → `version` | `1.3.0` | Not used by the manifest, because `wxt.config.ts` overrides it. WXT uses it for zip filenames |
 
 Suggested clean-up: remove `version` from `wxt.config.ts` so WXT uses `package.json`, and read it in the popup with `browser.runtime.getManifest().version`. That leaves one source of truth.
 
-`package.json` `name` (`wxt-react-starter`) and `description` (`manifest.json description`) are also starter defaults. The manifest's `name` and `description` come from `wxt.config.ts`, so they don't leak into the build. WXT uses `name` for zip filenames, though.
+`package.json` `name` is `ankignb`. The manifest's `name` (`AnkiGNB`) and `description` come from `wxt.config.ts`. WXT uses the `package.json` `name` for zip filenames.
 
 ## Building artifacts
 
@@ -31,17 +31,17 @@ npm run zip:firefox
 ## Publishing
 
 ### Chrome Web Store
-- Listing: `https://chromewebstore.google.com/detail/ecoealfdeebafjpmhjdlbdgpgegjeaem`
+- AnkiGNB is **not published yet**. The existing listing (`https://chromewebstore.google.com/detail/ecoealfdeebafjpmhjdlbdgpgegjeaem`) belongs to the original AnkiNLM by lkmss; publish the fork as a new item.
 - Upload the Chrome zip in the developer dashboard.
 - Permission justifications should match the table in [Browser Support](browser-support.md#chrome-mv3).
 
 ### Firefox Add-ons (AMO)
 - Not published yet. Firefox is non-functional, see [Browser Support](browser-support.md).
-- The gecko ID `ankinlm@lkmss.dev` must stay stable once published.
+- The gecko ID `ankignb@enesatesim.github.io` must stay stable once published.
 
 ## Privacy policy
 
-`PRIVACY_POLICY.md` states: no data collected, nothing transmitted, no cookies or analytics, no third-party services. The only outbound behavior is the user clicking external links (Buy Me a Coffee, GitHub, Google Form). **Any change that adds storage, telemetry or network requests must update this file and the store listings.** The policy links to `https://github.com/maialks/ankinlm` as the contact repo.
+`PRIVACY_POLICY.md` states: no data collected, nothing transmitted, no cookies or analytics, no third-party services. The only outbound behavior is the user clicking external links (Buy Me a Coffee, the two GitHub links, Google Form). **Any change that adds storage, telemetry or network requests must update this file and the store listings.** The policy links to `https://github.com/enesatesim/ankignb` as the contact repo and credits the original AnkiNLM repo.
 
 ## Icons
 
