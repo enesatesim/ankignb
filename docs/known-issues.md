@@ -4,7 +4,7 @@
 
 Severity: 🔴 user-visible bug · 🟠 robustness/security · 🟡 cleanup
 
-Fixed in v1.3 (AnkiGNB): Copy copied raw JSON; duplicate buttons; buttons lost on resize; download working only once; data arriving before the footer was lost; the injected reader didn't wait for `app-root`; unhandled parse errors; `createStyledButton` markup tied to an old NotebookLM build.
+Fixed in v1.3 (AnkiGNB): no buttons on flashcard sets generated since about November 2026, because `f`/`b` became content-block objects instead of strings (see [Data Formats](data-formats.md#flashcards)); Copy copied raw JSON; duplicate buttons; buttons lost on resize; download working only once; data arriving before the footer was lost; the injected reader didn't wait for `app-root`; unhandled parse errors; `createStyledButton` markup tied to an old NotebookLM build.
 
 ---
 

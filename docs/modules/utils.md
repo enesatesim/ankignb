@@ -5,19 +5,22 @@
 ## `src/types.ts`
 
 ```ts
+export interface ContentBlock { type: string; content?: string }
+export type RichText = string | { flashcardContentBlock: ContentBlock[] };
+
 export interface QuizData {
   quiz: {
-    question: string;
-    answerOptions: { text: string; rationale: string; isCorrect: boolean }[];
+    question: RichText;
+    answerOptions: { text: RichText; rationale: string; isCorrect: boolean }[];
   }[];
 }
 
 export interface FlashcardData {
-  flashcards: { f: string; b: string }[];   // f = front, b = back
+  flashcards: { f: RichText; b: RichText }[];   // f = front, b = back
 }
 ```
 
-These types are derived from observed payloads (from the NotebookLM era), not from an official schema. See [Data Formats](../data-formats.md).
+These types come from observed payloads, not an official schema. `RichText` covers both the legacy plain string and the content-block object used by artifacts generated since about November 2026. See [Data Formats](../data-formats.md).
 
 ## `src/utils/typeguards.ts`
 
@@ -55,6 +58,14 @@ createStyledButton(
 
 The footer is a fixed-height, `overflow: hidden`, `nowrap` flex row, so extra buttons get clipped in a narrow Studio panel. This shows all `.ankignb-label` spans, and if `footer.scrollWidth > footer.clientWidth` hides them again so the buttons collapse to icons. The content script calls it after injecting and from a `ResizeObserver`.
 
+### `richTextToString(value)`
+
+```ts
+richTextToString(value: unknown): string | null
+```
+
+Flattens one text field to plain text. A string is returned as is. For an object, it takes the first own key ending in `ContentBlock` whose value is an array (in practice `flashcardContentBlock`), keeps each block's string `content`, drops blocks with none (e.g. a hypothetical image block), and joins what is left with `\n`. Anything else, or no text left, gives `null`.
+
 ### `toTsv(data)`
 
 ```ts
@@ -62,8 +73,8 @@ toTsv(data: string): string | null
 ```
 
 1. `JSON.parse(data)` inside `try/catch`; invalid JSON → `null`.
-2. If it's flashcards: one row per card with string `f` and `b`, `escape(f) + '\t' + escape(b)`.
-3. If it's a quiz: one row per question with a string `question` and an `isCorrect` option with string `text`, `escape(question) + '\t' + escape(correctAnswer.text)`. Rationales and wrong options are dropped.
+2. If it's flashcards: one row per card whose `f` and `b` both flatten to text with `richTextToString`, `escape(front) + '\t' + escape(back)`.
+3. If it's a quiz: one row per question whose `question` flattens to text and that has an `isCorrect` option whose `text` flattens to text, `escape(question) + '\t' + escape(correctAnswer)`. Rationales and wrong options are dropped.
 4. Invalid items are skipped. Zero rows → `null`.
 5. Rows are joined with `\n`. No BOM (that's added for downloads only).
 

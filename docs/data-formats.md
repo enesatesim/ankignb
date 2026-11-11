@@ -8,19 +8,43 @@ Source: the `data-app-data` attribute on `<app-root>` inside the artifact iframe
 
 ### Flashcards
 
+There are two shapes, and both are seen live. Older artifacts keep the legacy shape, and artifacts generated since about November 2026 use content blocks. Each artifact uses one shape throughout.
+
+Legacy (plain strings):
+
 ```json
 {
   "flashcards": [
-    { "f": "What is the derivative of \\sin(x)?", "b": "\\cos(x)" },
-    { "f": "Define a group.", "b": "A set with an associative operation, identity, and inverses." }
-  ]
+    { "f": "What is the derivative of \\sin(x)?", "b": "\\cos(x)", "c": 1 },
+    { "f": "Define a group.", "b": "A set with an associative operation, identity, and inverses.", "c": 2 }
+  ],
+  "topics": { "covered": ["…"], "followUp": ["…"] }
+}
+```
+
+Content blocks (checked November 2026):
+
+```json
+{
+  "flashcards": [
+    {
+      "f": { "flashcardContentBlock": [{ "type": "text", "content": "What is the derivative of \\sin(x)?" }] },
+      "b": { "flashcardContentBlock": [{ "type": "text", "content": "\\cos(x)" }] },
+      "c": 1
+    }
+  ],
+  "topics": { "covered": ["…"], "followUp": ["…"] }
 }
 ```
 
 | Field | Meaning |
 |---|---|
-| `f` | Front (question) |
-| `b` | Back (answer) |
+| `f` | Front (question): a string, or `{ flashcardContentBlock: [{ type, content }] }` |
+| `b` | Back (answer): same as `f` |
+| `c` | Card number (ignored) |
+| `topics` | Topic lists shown by the viewer (ignored) |
+
+`richTextToString` (`src/utils/utils.ts`) flattens both shapes. Only `type: "text"` blocks have been seen so far. Blocks without a string `content` are dropped, and multiple blocks are joined with a newline (so the field gets quoted in the output). Any `*ContentBlock` array key is accepted, in case quiz payloads adopt a sibling key.
 
 ### Quiz
 
@@ -38,7 +62,9 @@ Source: the `data-app-data` attribute on `<app-root>` inside the artifact iframe
 }
 ```
 
-Only `question` and the **first** option with `isCorrect: true` are exported. Questions without a correct option are skipped. Items whose text fields aren't strings are skipped too, and a payload that yields zero rows is ignored (no buttons).
+Only checked in the legacy string shape: no quiz generated after the content-block change has been seen yet. `question` and option `text` also go through `richTextToString`, so a content-block quiz should work too.
+
+Only `question` and the **first** correct option (`isCorrect: true`) with usable text are exported. Questions without one are skipped. Items whose text fields can't be flattened to text are skipped too, and a payload that yields zero rows is ignored (no buttons).
 
 Detection order in `toTsv`: the flashcard check runs first, then the quiz check. Both checks are independent `if` blocks, so a payload with both keys would export both sets of rows.
 
@@ -92,7 +118,7 @@ The **Copy** button writes the same TSV text to the clipboard, **without** the B
 
 ## Changing the format
 
-All formatting lives in `toTsv` (`src/utils/utils.ts:110-146`); `createCsvBlob` only adds the BOM. If you change the delimiter or quoting, update:
+All formatting lives in `toTsv` (`src/utils/utils.ts:138-181`); `createCsvBlob` only adds the BOM. If you change the delimiter or quoting, update:
 - this page,
 - the root `README.md` import instructions,
 - the `link.download` filename in `src/entrypoints/content/index.ts:147` if the extension changes.

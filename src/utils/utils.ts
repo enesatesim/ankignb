@@ -104,6 +104,34 @@ export const fitButtonsToFooter = (footer: Element) => {
 };
 
 /**
+ * Flattens a card or quiz text field to plain text.
+ *
+ * Older artifacts store plain strings. Artifacts generated since about November 2026 store
+ * `{ flashcardContentBlock: [{ type: 'text', content: '…' }] }`. Any `*ContentBlock` array
+ * key is accepted, in case quizzes use a sibling key. Blocks without string `content` are
+ * dropped, and multiple blocks are joined with newlines. Returns `null` when no text is left.
+ */
+export const richTextToString = (value: unknown): string | null => {
+  if (typeof value === 'string') return value;
+  if (!value || typeof value !== 'object') return null;
+
+  const blocks = Object.entries(value).find(
+    ([key, v]) => key.endsWith('ContentBlock') && Array.isArray(v)
+  )?.[1] as unknown[] | undefined;
+  if (!blocks) return null;
+
+  const text = blocks
+    .map((block) =>
+      block && typeof block === 'object' && 'content' in block && typeof block.content === 'string'
+        ? block.content
+        : ''
+    )
+    .filter(Boolean)
+    .join('\n');
+  return text || null;
+};
+
+/**
  * Converts the artifact JSON (flashcards or quiz) into tab-separated Front/Back rows.
  * Returns `null` when the payload can't be parsed or yields no rows.
  */
@@ -116,7 +144,6 @@ export const toTsv = (data: string): string | null => {
   }
 
   const rows: string[] = [];
-  const isText = (value: unknown): value is string => typeof value === 'string';
 
   function escapeCsvField(field: string) {
     const escaped = field.replace(/"/g, '""');
@@ -128,17 +155,25 @@ export const toTsv = (data: string): string | null => {
 
   if (isFlashcardData(parsedData)) {
     for (const card of parsedData.flashcards) {
-      if (!card || !isText(card.f) || !isText(card.b)) continue;
-      rows.push(`${escapeCsvField(card.f)}\t${escapeCsvField(card.b)}`);
+      if (!card) continue;
+      const front = richTextToString(card.f);
+      const back = richTextToString(card.b);
+      if (!front || !back) continue;
+      rows.push(`${escapeCsvField(front)}\t${escapeCsvField(back)}`);
     }
   }
 
   if (isQuizData(parsedData)) {
     for (const quiz of parsedData.quiz) {
-      if (!quiz || !isText(quiz.question) || !Array.isArray(quiz.answerOptions)) continue;
-      const answer = quiz.answerOptions.find((opt) => opt && opt.isCorrect && isText(opt.text));
+      if (!quiz || !Array.isArray(quiz.answerOptions)) continue;
+      const question = richTextToString(quiz.question);
+      if (!question) continue;
+      const answer = quiz.answerOptions
+        .filter((opt) => opt && opt.isCorrect)
+        .map((opt) => richTextToString(opt.text))
+        .find(Boolean);
       if (!answer) continue;
-      rows.push(`${escapeCsvField(quiz.question)}\t${escapeCsvField(answer.text)}`);
+      rows.push(`${escapeCsvField(question)}\t${escapeCsvField(answer)}`);
     }
   }
 
